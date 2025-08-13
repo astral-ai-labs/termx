@@ -19,12 +19,13 @@ simple_alias "pip" "📦" "Use pip3" "pip3"
 simple_alias "cls" "🧹" "Clear screen" "clear"
 simple_alias "cursor" "📝" "Open current directory in Cursor" "cursor ."
 simple_alias "claude-config" "🤖" "Open global Claude config" "cursor ~/.claude"
+simple_alias "c" "🤖" "Open Claude Code (dang set permissions)" "claude --dangerously-skip-permissions"
 
 # ============================================================================
 # AWS HELPERS
 # ============================================================================
 
-helper "aws-login" "🔑" "Login to AWS SSO and set profile" << 'EOF'
+helper "aws-login" "🔑" "Login to AWS SSO (e.g. aws-login dev-profile)" << 'EOF'
     if [ -z "$1" ]; then
         echo "Usage: aws-login <profile>"
         echo "Example: aws-login sesha-dev"
@@ -59,7 +60,7 @@ EOF
 # COPY HELPERS
 # ============================================================================
 
-helper "copy-files" "📋" "Copy coding files to clipboard" << 'EOF'
+helper "copy-files" "📋" "Copy coding files to clipboard (e.g. copy-files -max 5)" << 'EOF'
     local MAX_FILES=""
     
     # Parse arguments
@@ -140,4 +141,3 @@ EOF
 #     echo "Hello world!"
 # EOF
 
-# simple_alias "myalias" "⚡" "Quick shortcut" "ls -la"
