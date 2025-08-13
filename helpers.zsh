@@ -20,6 +20,9 @@ simple_alias "cls" "🧹" "Clear screen" "clear"
 
 simple_alias "claude-cfg" "🤖" "Open global Claude config" "(cd ~/.claude && cursor .)"
 simple_alias "c" "🤖" "Open Claude Code (skip permissions)" "claude --dangerously-skip-permissions"
+simple_alias "edit-helpers" "📝" "Open helpers.zsh for editing" "cursor /Users/chris/eng/termx/helpers.zsh"
+simple_alias "edit-zshrc" "⚙️" "Open .zshrc for editing" "cursor ~/.zshrc"
+simple_alias "popiterm" "📺" "Open iTerm at current directory" "open -a iTerm \"$PWD\""
 # ============================================================================
 # AWS HELPERS
 # ============================================================================
