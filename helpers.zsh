@@ -17,10 +17,9 @@ simple_alias "home" "🏠" "Go to home directory" "cd ~"
 simple_alias "python" "🐍" "Use Python 3" "python3"
 simple_alias "pip" "📦" "Use pip3" "pip3"
 simple_alias "cls" "🧹" "Clear screen" "clear"
-simple_alias "cursor" "📝" "Open current directory in Cursor" "cursor ."
-simple_alias "claude-config" "🤖" "Open global Claude config" "cursor ~/.claude"
-simple_alias "c" "🤖" "Open Claude Code (dang set permissions)" "claude --dangerously-skip-permissions"
 
+simple_alias "claude-cfg" "🤖" "Open global Claude config" "(cd ~/.claude && cursor .)"
+simple_alias "c" "🤖" "Open Claude Code (skip permissions)" "claude --dangerously-skip-permissions"
 # ============================================================================
 # AWS HELPERS
 # ============================================================================
