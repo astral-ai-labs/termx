@@ -18,7 +18,7 @@ simple_alias "python" "🐍" "Use Python 3" "python3"
 simple_alias "pip" "📦" "Use pip3" "pip3"
 simple_alias "cls" "🧹" "Clear screen" "clear"
 
-simple_alias "claude-cfg" "🤖" "Open global Claude config" "(cd ~/.claude && cursor .)"
+simple_alias "c-cfg" "🤖" "Open global Claude config" "(cd ~/.claude && cursor .)"
 simple_alias "c" "🤖" "Open Claude Code (skip permissions)" "claude --dangerously-skip-permissions"
 simple_alias "edit-helpers" "📝" "Open helpers.zsh for editing" "cursor /Users/chris/eng/termx/helpers.zsh"
 simple_alias "edit-zshrc" "⚙️" "Open .zshrc for editing" "cursor ~/.zshrc"
@@ -133,6 +133,64 @@ helper "ai-setup" "🤖" "Copy ai_stuff directory to current location" << 'EOF'
     
     cp -r "$source" "." && echo "✅ AI setup complete!" || echo "❌ Copy failed"
 EOF
+
+helper "cursor-rules-setup" "📐" "Copy ai_stuff directory to .cursor/rules for Cursor IDE rules (flattened)" << 'EOF'
+    local source="/Users/chris/eng/astral-os/ai_stuff"
+    local target_dir=".cursor/rules"
+    
+    echo "📐 Setting up Cursor rules directory..."
+    
+    if [[ ! -d "$source" ]]; then
+        echo "❌ Source not found: $source"
+        return 1
+    fi
+    
+    # Create .cursor/rules directory if it doesn't exist
+    if [[ ! -d "$target_dir" ]]; then
+        echo "📁 Creating $target_dir directory..."
+        mkdir -p "$target_dir"
+    fi
+    
+    # Check if target directory has contents
+    if [[ -n "$(ls -A "$target_dir" 2>/dev/null)" ]]; then
+        echo -n "⚠️  $target_dir has existing contents. Overwrite? (y/N): "
+        read -r response
+        [[ ! "$response" =~ ^[Yy]$ ]] && return 0
+        rm -rf "$target_dir"/*
+    fi
+    
+    echo "📋 Copying and flattening ai_stuff contents to $target_dir..."
+    
+    # Copy directories that should remain as-is
+    for preserve_dir in "to-do" "docs"; do
+        if [[ -d "$source/$preserve_dir" ]]; then
+            echo "📁 Preserving $preserve_dir directory structure..."
+            cp -r "$source/$preserve_dir" "$target_dir/"
+        fi
+    done
+    
+    # Flatten all other files to root level
+    echo "📄 Flattening other files to root level..."
+    find "$source" -type f -not -path "$source/to-do/*" -not -path "$source/docs/*" | while read -r file; do
+        filename=$(basename "$file")
+        cp "$file" "$target_dir/$filename"
+    done
+    
+    if [[ $? -eq 0 ]]; then
+        echo "✅ Cursor rules setup complete (flattened structure)!"
+        echo "💡 Files are now available in $target_dir for Cursor IDE"
+        echo "📁 Preserved directories: to-do, docs"
+    else
+        echo "❌ Copy failed - check permissions and try again"
+        return 1
+    fi
+EOF
+
+# ============================================================================
+# YOUTUBE ANALYZER HELPERS
+# ============================================================================
+
+simple_alias "yt-agent" "📺" "Run YouTube video analyzer in interactive mode" "uv run /Users/chris/eng/youtube-agent/main.py"
 
 # ============================================================================
 # ADD YOUR OWN HELPERS BELOW
