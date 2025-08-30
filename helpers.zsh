@@ -193,9 +193,9 @@ helper "cursor-rules-setup" "📐" "Copy ai_stuff directory to .cursor/rules for
         fi
     done
     
-    # Flatten all other files to root level
+    # Flatten all other files to root level (ignoring lightweight directory)
     echo "📄 Flattening other files to root level..."
-    find "$source" -type f -not -path "$source/to-do/*" -not -path "$source/docs/*" | while read -r file; do
+    find "$source" -type f -not -path "$source/to-do/*" -not -path "$source/docs/*" -not -path "$source/lightweight/*" | while read -r file; do
         filename=$(basename "$file")
         cp "$file" "$target_dir/$filename"
     done
