@@ -217,6 +217,102 @@ EOF
 simple_alias "yt-agent" "📺" "Run YouTube video analyzer in interactive mode" "uv run /Users/chris/eng/youtube-agent/main.py"
 
 # ============================================================================
+# ASTRAL OS HELPERS
+# ============================================================================
+
+helper "init-astral-ui" "🚀" "Initialize Astral UI directory structure for Next.js + shadcn projects" << 'EOF'
+    echo "🚀 Initializing Astral UI directory structure..."
+    
+    # 1️⃣ Verify this is a Next.js project
+    if [[ ! -f "package.json" ]] || ! grep -q '"next"' package.json; then
+        echo "❌ This is not a Next.js project (no Next.js found in package.json)"
+        echo "💡 Run this command from the root of a Next.js project"
+        return 1
+    fi
+    
+    # 2️⃣ Verify shadcn/ui is installed (components.json exists)
+    if [[ ! -f "components.json" ]]; then
+        echo "❌ shadcn/ui not found (components.json missing)"
+        echo "💡 Install shadcn/ui first: pnpm dlx shadcn@latest init"
+        return 1
+    fi
+    
+    echo "✅ Next.js project detected"
+    echo "✅ shadcn/ui detected"
+    echo ""
+    
+    # 3️⃣ Create directory structure within src/core/ui
+    echo "📁 Creating Astral UI directory structure..."
+    
+    local base_dir="src"
+    if [[ ! -d "$base_dir" ]]; then
+        echo "❌ src directory not found"
+        return 1
+    fi
+    
+    # Create core/ui directory and subdirectories
+    mkdir -p "$base_dir/core/ui/components"
+    mkdir -p "$base_dir/core/ui/common"
+    mkdir -p "$base_dir/core/ui/hooks"
+    mkdir -p "$base_dir/core/ui/lib"
+    mkdir -p "$base_dir/core/ui/primitives"
+    mkdir -p "$base_dir/core/ui/motion-primitives"
+    
+    echo "  ✅ Created $base_dir/core/ui/components"
+    echo "  ✅ Created $base_dir/core/ui/common"
+    echo "  ✅ Created $base_dir/core/ui/hooks"
+    echo "  ✅ Created $base_dir/core/ui/lib"
+    echo "  ✅ Created $base_dir/core/ui/primitives"
+    echo "  ✅ Created $base_dir/core/ui/motion-primitives"
+    
+    # 4️⃣ Move existing src/lib to src/core/ui/lib if it exists
+    if [[ -d "$base_dir/lib" ]]; then
+        echo "📦 Moving existing $base_dir/lib to $base_dir/core/ui/lib..."
+        # Move contents, not the directory itself
+        if [[ -n "$(ls -A "$base_dir/lib" 2>/dev/null)" ]]; then
+            cp -r "$base_dir/lib"/* "$base_dir/core/ui/lib/" 2>/dev/null || true
+            rm -rf "$base_dir/lib"
+            echo "  ✅ Moved $base_dir/lib contents to $base_dir/core/ui/lib"
+        else
+            rm -rf "$base_dir/lib"
+            echo "  ✅ Removed empty $base_dir/lib directory"
+        fi
+    fi
+    
+    # 5️⃣ Update components.json aliases
+    echo "⚙️  Updating components.json aliases..."
+    
+    # Create a temporary file with updated components.json
+    local temp_file=$(mktemp)
+    
+    # Update aliases using jq
+    jq '.aliases = {
+        "lib": "@/core/ui/lib",
+        "utils": "@/core/ui/lib/utils",
+        "ui": "@/core/ui/primitives",
+        "hooks": "@/core/ui/hooks",
+        "components": "@/core/ui/components"
+    }' components.json > "$temp_file" && mv "$temp_file" components.json
+    echo "  ✅ Updated components.json aliases"
+    
+    rm -f "$temp_file"
+    
+    echo ""
+    echo "🎉 Astral UI initialization complete!"
+    echo ""
+    echo "📁 Directory structure created:"
+    echo "  src/core/ui/components/"
+    echo "  src/core/ui/common/"
+    echo "  src/core/ui/hooks/"
+    echo "  src/core/ui/lib/"
+    echo "  src/core/ui/primitives/"
+    echo "  src/core/ui/motion-primitives/"
+    echo ""
+    echo "⚙️  components.json updated with new aliases"
+    echo "💡 You may need to restart your TypeScript server"
+EOF
+
+# ============================================================================
 # ADD YOUR OWN HELPERS BELOW
 # ============================================================================
 
