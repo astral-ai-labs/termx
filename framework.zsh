@@ -65,43 +65,107 @@ helper "help" "🛠️" "Show all available aliases and helpers" << 'EOF'
     # Parse optional filter
     local filter="$1"
     
-    # Show simple aliases first
-    if [[ ${#ALIASES_REGISTRY} -gt 0 ]]; then
-        echo "📌 Simple Aliases:"
-        for name in ${(ko)ALIASES_REGISTRY}; do
-            local info="${ALIASES_REGISTRY[$name]}"
-            local emoji="${info%%|*}"
-            local rest="${info#*|}"
-            local desc="${rest%%|*}"
-            
-            # Apply filter if provided
-            if [[ -n "$filter" ]] && [[ ! "$name" =~ "$filter" ]] && [[ ! "$desc" =~ "$filter" ]]; then
-                continue
-            fi
-            
-            printf "  %-20s %s %s\n" "$name" "$emoji" "$desc"
-        done
-        echo ""
-    fi
+    # Helper function to print a command entry
+    _print_entry() {
+        local name="$1" emoji="$2" desc="$3"
+        printf "  %-20s %s %s\n" "$name" "$emoji" "$desc"
+    }
     
-    # Show helper functions
-    echo "🔧 Helper Functions:"
+    # Helper function to check filter match
+    _matches_filter() {
+        local name="$1" desc="$2"
+        [[ -z "$filter" ]] || [[ "$name" =~ "$filter" ]] || [[ "$desc" =~ "$filter" ]]
+    }
+    
+    # Categorize and display commands
+    local -a aws_cmds git_cmds vercel_cmds util_cmds
+    
+    # Categorize aliases
+    for name in ${(ko)ALIASES_REGISTRY}; do
+        local info="${ALIASES_REGISTRY[$name]}"
+        local emoji="${info%%|*}"
+        local rest="${info#*|}"
+        local desc="${rest%%|*}"
+        
+        _matches_filter "$name" "$desc" || continue
+        
+        local entry="$name|$emoji|$desc"
+        case "$name" in
+            aws-*) aws_cmds+=("$entry") ;;
+            git-*) git_cmds+=("$entry") ;;
+            vv-*)  vercel_cmds+=("$entry") ;;
+            *)     util_cmds+=("$entry") ;;
+        esac
+    done
+    
+    # Categorize helpers
     for name in ${(ko)HELPERS_REGISTRY}; do
         local info="${HELPERS_REGISTRY[$name]}"
         local emoji="${info%%|*}"
         local desc="${info#*|}"
         
-        # Apply filter if provided
-        if [[ -n "$filter" ]] && [[ ! "$name" =~ "$filter" ]] && [[ ! "$desc" =~ "$filter" ]]; then
-            continue
-        fi
+        _matches_filter "$name" "$desc" || continue
         
-        printf "  %-20s %s %s\n" "$name" "$emoji" "$desc"
+        local entry="$name|$emoji|$desc"
+        case "$name" in
+            aws-*) aws_cmds+=("$entry") ;;
+            git-*) git_cmds+=("$entry") ;;
+            vv-*)  vercel_cmds+=("$entry") ;;
+            *)     util_cmds+=("$entry") ;;
+        esac
     done
     
-    echo ""
+    # Display categories
+    if [[ ${#util_cmds} -gt 0 ]]; then
+        echo "🔧 Utilities:"
+        for entry in ${(o)util_cmds}; do
+            local name="${entry%%|*}"
+            local rest="${entry#*|}"
+            local emoji="${rest%%|*}"
+            local desc="${rest#*|}"
+            _print_entry "$name" "$emoji" "$desc"
+        done
+        echo ""
+    fi
+    
+    if [[ ${#git_cmds} -gt 0 ]]; then
+        echo "📦 Git:"
+        for entry in ${(o)git_cmds}; do
+            local name="${entry%%|*}"
+            local rest="${entry#*|}"
+            local emoji="${rest%%|*}"
+            local desc="${rest#*|}"
+            _print_entry "$name" "$emoji" "$desc"
+        done
+        echo ""
+    fi
+    
+    if [[ ${#aws_cmds} -gt 0 ]]; then
+        echo "☁️  AWS:"
+        for entry in ${(o)aws_cmds}; do
+            local name="${entry%%|*}"
+            local rest="${entry#*|}"
+            local emoji="${rest%%|*}"
+            local desc="${rest#*|}"
+            _print_entry "$name" "$emoji" "$desc"
+        done
+        echo ""
+    fi
+    
+    if [[ ${#vercel_cmds} -gt 0 ]]; then
+        echo "▲ Vercel:"
+        for entry in ${(o)vercel_cmds}; do
+            local name="${entry%%|*}"
+            local rest="${entry#*|}"
+            local emoji="${rest%%|*}"
+            local desc="${rest#*|}"
+            _print_entry "$name" "$emoji" "$desc"
+        done
+        echo ""
+    fi
+    
     echo "💡 Tips:"
-    echo "  • Type 'help aws' to filter AWS commands"
+    echo "  • Type 'help git' to filter Git commands"
     echo "  • Type 'edit-helpers' to add new commands"
 EOF
 

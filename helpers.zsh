@@ -186,7 +186,7 @@ helper "cursor-rules-setup" "📐" "Copy ai_stuff directory to .cursor/rules for
     echo "📋 Copying and flattening ai_stuff contents to $target_dir..."
     
     # Copy directories that should remain as-is
-    for preserve_dir in "to-do" "docs"; do
+    for preserve_dir in "to-do" "docs" "examples"; do
         if [[ -d "$source/$preserve_dir" ]]; then
             echo "📁 Preserving $preserve_dir directory structure..."
             cp -r "$source/$preserve_dir" "$target_dir/"
@@ -195,7 +195,7 @@ helper "cursor-rules-setup" "📐" "Copy ai_stuff directory to .cursor/rules for
     
     # Flatten all other files to root level (ignoring lightweight directory)
     echo "📄 Flattening other files to root level..."
-    find "$source" -type f -not -path "$source/to-do/*" -not -path "$source/docs/*" -not -path "$source/lightweight/*" | while read -r file; do
+    find "$source" -type f -not -path "$source/to-do/*" -not -path "$source/docs/*" -not -path "$source/examples/*" -not -path "$source/lightweight/*" | while read -r file; do
         filename=$(basename "$file")
         cp "$file" "$target_dir/$filename"
     done
@@ -203,7 +203,7 @@ helper "cursor-rules-setup" "📐" "Copy ai_stuff directory to .cursor/rules for
     if [[ $? -eq 0 ]]; then
         echo "✅ Cursor rules setup complete (flattened structure)!"
         echo "💡 Files are now available in $target_dir for Cursor IDE"
-        echo "📁 Preserved directories: to-do, docs"
+        echo "📁 Preserved directories: to-do, docs, examples"
     else
         echo "❌ Copy failed - check permissions and try again"
         return 1
@@ -310,6 +310,88 @@ helper "init-astral-ui" "🚀" "Initialize Astral UI directory structure for Nex
     echo ""
     echo "⚙️  components.json updated with new aliases"
     echo "💡 You may need to restart your TypeScript server"
+EOF
+
+# ============================================================================
+# GIT HELPERS
+# ============================================================================
+
+simple_alias "git-st" "📊" "Git status" "git status"
+simple_alias "git-co" "🔀" "Git checkout (e.g. git-co main)" "git checkout"
+simple_alias "git-pull" "⬇️" "Git pull with rebase" "git pull --rebase"
+simple_alias "git-push" "⬆️" "Git push to current branch" "git push"
+simple_alias "git-pushf" "⬆️" "Git push force with lease (safer force push)" "git push --force-with-lease"
+
+helper "git-cm" "💬" "Git commit with message (e.g. git-cm 'fix bug')" << 'EOF'
+    if [[ -z "$1" ]]; then
+        echo "Usage: git-cm 'commit message'"
+        return 1
+    fi
+    git commit -m "$*"
+EOF
+
+helper "git-acp" "🚀" "Git add all, commit, push (e.g. git-acp 'my message')" << 'EOF'
+    if [[ -z "$1" ]]; then
+        echo "Usage: git-acp 'commit message'"
+        return 1
+    fi
+    git add -A && git commit -m "$*" && git push
+EOF
+
+helper "git-new" "🌱" "Create and checkout new branch (e.g. git-new feature/thing)" << 'EOF'
+    if [[ -z "$1" ]]; then
+        echo "Usage: git-new <branch-name>"
+        return 1
+    fi
+    git checkout -b "$1"
+EOF
+
+helper "git-del" "🗑️" "Delete branch locally and remotely (e.g. git-del feature/old)" << 'EOF'
+    if [[ -z "$1" ]]; then
+        echo "Usage: git-del <branch-name>"
+        return 1
+    fi
+    local branch="$1"
+    echo "⚠️  This will delete '$branch' locally and remotely"
+    echo -n "Continue? (y/N): "
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        git branch -d "$branch" 2>/dev/null || git branch -D "$branch"
+        git push origin --delete "$branch" 2>/dev/null
+        echo "✅ Branch '$branch' deleted"
+    fi
+EOF
+
+helper "git-undo" "↩️" "Undo last commit (keeps changes staged)" << 'EOF'
+    echo "↩️  Undoing last commit (changes will remain staged)..."
+    git reset --soft HEAD~1
+    echo "✅ Last commit undone. Changes are staged."
+EOF
+
+helper "git-amend" "✏️" "Amend last commit with staged changes (no message edit)" << 'EOF'
+    git commit --amend --no-edit
+    echo "✅ Amended last commit"
+EOF
+
+helper "git-log" "📜" "Pretty git log (last 10 commits)" << 'EOF'
+    git log --oneline --graph --decorate -10
+EOF
+
+helper "git-branches" "🌿" "List branches sorted by last commit" << 'EOF'
+    git branch --sort=-committerdate --format='%(HEAD) %(color:yellow)%(refname:short)%(color:reset) - %(color:green)%(committerdate:relative)%(color:reset)'
+EOF
+
+helper "git-stash" "📦" "Stash changes with optional message" << 'EOF'
+    if [[ -z "$1" ]]; then
+        git stash push
+    else
+        git stash push -m "$*"
+    fi
+    echo "✅ Changes stashed"
+EOF
+
+helper "git-pop" "📤" "Pop latest stash" << 'EOF'
+    git stash pop
 EOF
 
 # ============================================================================
