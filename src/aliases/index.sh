@@ -7,3 +7,6 @@ simple_alias "cls" "🧹" "Clear screen" "clear"
 simple_alias "edit-zsh" "⚙️" "Open .zshrc for editing" "cursor ~/.zshrc"
 simple_alias "popiterm" "📺" "Open iTerm at current directory" "open -a iTerm \"$PWD\""
 simple_alias "open-termx" "📂" "Open termx repo in Cursor" "cursor ~/eng/2026/core/termx"
+simple_alias "finder" "📂" "Open current directory in Finder" "open ."
+
+source "${0:A:h}/goto.sh"
