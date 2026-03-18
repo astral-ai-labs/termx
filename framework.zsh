@@ -1,227 +1,155 @@
 #!/usr/bin/env zsh
 
-# ~/eng/termx/framework.zsh
-# 
+# ~/eng/2026/core/termx/framework.zsh
+#
 # HELPER SYSTEM FRAMEWORK
 # =======================
-# This file contains the core system - DO NOT add helpers here
-# Add your helpers in helpers.zsh instead
+# Core system only. Add commands in src/<module>/index.sh
 
-# Core helper registration system
-typeset -A HELPERS_REGISTRY
-typeset -A ALIASES_REGISTRY
+TERMX_DIR="${0:A:h}"
 
-# Function to register multi-line helpers
+# ============================================================================
+# REGISTRIES
+# ============================================================================
+
+typeset -gA HELPERS_REGISTRY    # name -> emoji|desc
+typeset -gA ALIASES_REGISTRY    # name -> emoji|desc|cmd
+typeset -gA MODULES_REGISTRY    # module_name -> emoji
+typeset -gA CMD_MODULE          # cmd_name -> module_name
+
+_CURRENT_MODULE_NAME=""
+_CURRENT_MODULE_EMOJI=""
+
+# ============================================================================
+# REGISTRATION FUNCTIONS
+# ============================================================================
+
+module() {
+    _CURRENT_MODULE_EMOJI="$1"
+    _CURRENT_MODULE_NAME="$2"
+    MODULES_REGISTRY[$_CURRENT_MODULE_NAME]="$_CURRENT_MODULE_EMOJI"
+}
+
 helper() {
-    local name="$1"
-    local emoji="$2"
-    local desc="$3"
+    local name="$1" emoji="$2" desc="$3"
     local body=$(cat)
-    
-    # Register the helper
+
     HELPERS_REGISTRY[$name]="$emoji|$desc"
-    
-    # Create the function
+    CMD_MODULE[$name]="$_CURRENT_MODULE_NAME"
+
     eval "function ${(q)name}() {
         $body
     }"
-    
-    # Auto-create short alias if it ends with ?
-    if [[ "$name" == *"?" ]]; then
-        # No alias needed, it's already short
-        :
-    else
-        # Create convenience alias without hyphens
-        local alias_name="${name//-/_}"
-        if [[ "$alias_name" != "$name" ]]; then
-            eval "alias $alias_name='$name'"
-        fi
-    fi
 }
 
-# Function to register simple one-line aliases
 simple_alias() {
-    local name="$1"
-    local emoji="$2"
-    local desc="$3"
-    local cmd="$4"
-    
+    local name="$1" emoji="$2" desc="$3" cmd="$4"
+
     ALIASES_REGISTRY[$name]="$emoji|$desc|$cmd"
+    CMD_MODULE[$name]="$_CURRENT_MODULE_NAME"
     alias "$name"="$cmd"
 }
 
 # ============================================================================
-# CORE SYSTEM COMMANDS
+# MODULE LOADER
 # ============================================================================
 
-helper "help" "🛠️" "Show all available aliases and helpers" << 'EOF'
-    # Auto-refresh before showing help
+_load_modules() {
+    for mod in "$TERMX_DIR"/src/*/index.sh(N); do
+        source "$mod"
+    done
+}
+
+# ============================================================================
+# CORE COMMANDS
+# ============================================================================
+
+module "⚙️" "System"
+
+helper "help" "🛠️" "Show all available aliases and helpers" << 'HELPEOF'
     refresh > /dev/null
-    
+
     echo "🛠️  All Available Commands:"
     echo "==========================="
     echo ""
-    
-    # Parse optional filter
-    local filter="$1"
-    
-    # Helper function to print a command entry
+
+    local filter="${(L)1}"
+
     _print_entry() {
-        local name="$1" emoji="$2" desc="$3"
-        printf "  %-20s %s %s\n" "$name" "$emoji" "$desc"
+        printf "  %-20s %s %s\n" "$1" "$2" "$3"
     }
-    
-    # Helper function to check filter match
-    _matches_filter() {
-        local name="$1" desc="$2"
-        [[ -z "$filter" ]] || [[ "$name" =~ "$filter" ]] || [[ "$desc" =~ "$filter" ]]
+
+    _matches() {
+        [[ -z "$filter" ]] || [[ "${(L)1}" == *"$filter"* ]] || [[ "${(L)2}" == *"$filter"* ]]
     }
-    
-    # Categorize and display commands
-    local -a aws_cmds git_cmds vercel_cmds util_cmds
-    
-    # Categorize aliases
+
+    # Collect commands grouped by module
+    local -A module_cmds
+
     for name in ${(ko)ALIASES_REGISTRY}; do
         local info="${ALIASES_REGISTRY[$name]}"
         local emoji="${info%%|*}"
         local rest="${info#*|}"
         local desc="${rest%%|*}"
-        
-        _matches_filter "$name" "$desc" || continue
-        
-        local entry="$name|$emoji|$desc"
-        case "$name" in
-            aws-*) aws_cmds+=("$entry") ;;
-            git-*) git_cmds+=("$entry") ;;
-            vv-*)  vercel_cmds+=("$entry") ;;
-            *)     util_cmds+=("$entry") ;;
-        esac
+        local mod="${CMD_MODULE[$name]}"
+
+        _matches "$name" "$desc" || _matches "$mod" "" || continue
+        module_cmds[$mod]+="${name}|${emoji}|${desc}"$'\n'
     done
-    
-    # Categorize helpers
+
     for name in ${(ko)HELPERS_REGISTRY}; do
         local info="${HELPERS_REGISTRY[$name]}"
         local emoji="${info%%|*}"
         local desc="${info#*|}"
-        
-        _matches_filter "$name" "$desc" || continue
-        
-        local entry="$name|$emoji|$desc"
-        case "$name" in
-            aws-*) aws_cmds+=("$entry") ;;
-            git-*) git_cmds+=("$entry") ;;
-            vv-*)  vercel_cmds+=("$entry") ;;
-            *)     util_cmds+=("$entry") ;;
-        esac
+        local mod="${CMD_MODULE[$name]}"
+
+        _matches "$name" "$desc" || _matches "$mod" "" || continue
+        module_cmds[$mod]+="${name}|${emoji}|${desc}"$'\n'
     done
-    
-    # Display categories
-    if [[ ${#util_cmds} -gt 0 ]]; then
-        echo "🔧 Utilities:"
-        for entry in ${(o)util_cmds}; do
-            local name="${entry%%|*}"
-            local rest="${entry#*|}"
-            local emoji="${rest%%|*}"
-            local desc="${rest#*|}"
-            _print_entry "$name" "$emoji" "$desc"
+
+    # Display each module that has matching commands
+    for mod_name in ${(ko)MODULES_REGISTRY}; do
+        local entries="${module_cmds[$mod_name]}"
+        [[ -z "$entries" ]] && continue
+
+        local mod_emoji="${MODULES_REGISTRY[$mod_name]}"
+        echo "${mod_emoji} ${mod_name}:"
+
+        echo "$entries" | while IFS='|' read -r cmd_name cmd_emoji cmd_desc; do
+            [[ -z "$cmd_name" ]] && continue
+            _print_entry "$cmd_name" "$cmd_emoji" "$cmd_desc"
         done
         echo ""
-    fi
-    
-    if [[ ${#git_cmds} -gt 0 ]]; then
-        echo "📦 Git:"
-        for entry in ${(o)git_cmds}; do
-            local name="${entry%%|*}"
-            local rest="${entry#*|}"
-            local emoji="${rest%%|*}"
-            local desc="${rest#*|}"
-            _print_entry "$name" "$emoji" "$desc"
-        done
-        echo ""
-    fi
-    
-    if [[ ${#aws_cmds} -gt 0 ]]; then
-        echo "☁️  AWS:"
-        for entry in ${(o)aws_cmds}; do
-            local name="${entry%%|*}"
-            local rest="${entry#*|}"
-            local emoji="${rest%%|*}"
-            local desc="${rest#*|}"
-            _print_entry "$name" "$emoji" "$desc"
-        done
-        echo ""
-    fi
-    
-    if [[ ${#vercel_cmds} -gt 0 ]]; then
-        echo "▲ Vercel:"
-        for entry in ${(o)vercel_cmds}; do
-            local name="${entry%%|*}"
-            local rest="${entry#*|}"
-            local emoji="${rest%%|*}"
-            local desc="${rest#*|}"
-            _print_entry "$name" "$emoji" "$desc"
-        done
-        echo ""
-    fi
-    
+    done
+
     echo "💡 Tips:"
-    echo "  • Type 'help git' to filter Git commands"
-    echo "  • Type 'edit-helpers' to add new commands"
-EOF
+    echo "  • Type 'help <keyword>' to filter commands"
+    echo "  • Type 'refresh' to reload after editing"
+HELPEOF
 
 helper "refresh" "🔄" "Reload shell configuration" << 'EOF'
-    # Clear existing registries to avoid duplication
-    unset HELPERS_REGISTRY
-    unset ALIASES_REGISTRY
-    typeset -gA HELPERS_REGISTRY
-    typeset -gA ALIASES_REGISTRY
-    
-    # Reload helpers.zsh (this requires the framework functions to be available)
-    source ~/eng/termx/helpers.zsh
-    
+    unset HELPERS_REGISTRY ALIASES_REGISTRY MODULES_REGISTRY CMD_MODULE
+    typeset -gA HELPERS_REGISTRY ALIASES_REGISTRY MODULES_REGISTRY CMD_MODULE
+
+    _CURRENT_MODULE_NAME=""
+    _CURRENT_MODULE_EMOJI=""
+
+    module "⚙️" "System"
+    source "$TERMX_DIR/framework.zsh"
+
     echo "🔄 Shell configuration reloaded"
-EOF
-
-helper "edit-helpers" "✏️" "Edit helpers file" << 'EOF'
-    ${EDITOR:-cursor} ~/eng/termx/helpers.zsh
-EOF
-
-helper "edit-framework" "🔧" "Edit framework file (advanced)" << 'EOF'
-    echo "⚠️  Warning: Editing the framework can break the helper system"
-    echo -n "Continue? (y/N): "
-    read -r response
-    if [[ "$response" =~ ^[Yy]$ ]] && then
-        ${EDITOR:-cursor} ~/eng/termx/framework.zsh
-    fi
-EOF
-
-helper "edit-zsh" "⚙️" "Edit .zshrc file" << 'EOF'
-    ${EDITOR:-cursor} ~/.zshrc
-EOF
-
-helper "new-helper" "➕" "Show template for adding new helpers" << 'EOF'
-    echo 'Edit helpers.zsh and add:'
-    echo ''
-    echo 'For a simple alias (one-liner):'
-    echo '  simple_alias "name" "🔧" "description" "command"'
-    echo ''
-    echo 'For a helper function:'
-    echo '  helper "my-helper" "🔧" "Description here" << '\''EOF'\'''
-    echo '      # Your code here'
-    echo '      echo "Hello from my-helper!"'
-    echo '  EOF'
-    echo ''
-    echo 'Then run: refresh'
 EOF
 
 # Quick access aliases
 alias h="help"
 alias "?"="help"
 
-# Load the actual helpers
-source ~/eng/termx/helpers.zsh
+# ============================================================================
+# BOOT
+# ============================================================================
 
-# Show hint on first load
+_load_modules
+
 if [[ -z "$HELPERS_LOADED" ]]; then
     export HELPERS_LOADED=1
     echo "💡 Type 'help' (or '?') to see all aliases and helpers"
