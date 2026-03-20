@@ -9,4 +9,16 @@ simple_alias "popiterm" "📺" "Open iTerm at current directory" "open -a iTerm 
 simple_alias "open-termx" "📂" "Open termx repo in Cursor" "cursor ~/eng/2026/core/termx"
 simple_alias "finder" "📂" "Open current directory in Finder" "open ."
 
+helper "paste" "📋" "Paste clipboard contents to a file" << 'EOF'
+    local filename="$1"
+    if [[ -z "$filename" ]]; then
+        printf "📋 Filename: "
+        read filename
+    fi
+    [[ -z "$filename" ]] && echo "❌ No filename provided" && return 1
+    [[ "$filename" != *.* ]] && filename="${filename}.md"
+    pbpaste > "$filename"
+    echo "📋 Pasted to $filename"
+EOF
+
 source "${0:A:h}/goto.sh"
