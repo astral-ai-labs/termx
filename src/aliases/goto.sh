@@ -16,3 +16,15 @@ EOF
 helper "clients" "👥" "Go to clients dir (clients finder → Finder)" << 'EOF'
     _goto "👥" /Users/chris/eng/2026/clients "$1"
 EOF
+
+helper "skills" "🧠" "Go to skills dir (skills finder → Finder)" << 'EOF'
+    _goto "🧠" /Users/chris/eng/2026/skills "$1"
+EOF
+
+helper "playground" "🎮" "Go to playground dir (playground finder → Finder)" << 'EOF'
+    _goto "🎮" /Users/chris/eng/2026/playground "$1"
+EOF
+
+helper "c-cfg" "⚙️" "Go to Claude config dir (c-cfg finder → Finder)" << 'EOF'
+    _goto "⚙️" ~/.claude "$1"
+EOF
