@@ -25,6 +25,10 @@ helper "playground" "🎮" "Go to playground dir (playground finder → Finder)"
     _goto "🎮" /Users/chris/eng/2026/playground "$1"
 EOF
 
+helper "writing" "📝" "Go to writing dir (writing finder → Finder)" << 'EOF'
+    _goto "📝" /Users/chris/eng/2026/playground/writing "$1"
+EOF
+
 helper "c-cfg" "⚙️" "Go to Claude config dir (c-cfg finder → Finder)" << 'EOF'
     _goto "⚙️" ~/.claude "$1"
 EOF
