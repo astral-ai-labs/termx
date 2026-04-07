@@ -11,5 +11,8 @@ helper "walt" "🦞" "Open OpenClaw TUI (walt add <skill> installs a skill)" << 
         return
     fi
 
-    openclaw tui
+    local session_id
+    session_id="$(uuidgen)"
+
+    openclaw tui --session "$session_id"
 EOF
