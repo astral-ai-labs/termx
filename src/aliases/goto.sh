@@ -1,3 +1,5 @@
+module "🔗" "Shortcuts"
+
 _goto() {
     local emoji="$1" dir="$2" action="$3"
     if [[ "$action" == "finder" ]]; then
@@ -15,6 +17,10 @@ EOF
 
 helper "clients" "👥" "Go to clients dir (clients finder → Finder)" << 'EOF'
     _goto "👥" /Users/chris/eng/2026/clients "$1"
+EOF
+
+helper "krnel" "🧩" "Go to krnel dir (krnel finder → Finder)" << 'EOF'
+    _goto "🧩" /Users/chris/eng/2026/krnel "$1"
 EOF
 
 helper "skills" "🧠" "Go to skills dir (skills finder → Finder)" << 'EOF'
